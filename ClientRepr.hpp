@@ -8,11 +8,13 @@
 
 #include <string>
 
+/**
+ * A structure for representing user
+ */
 struct ClientRepr
 {
     explicit ClientRepr(int sock_descriptor) : sock_d(sock_descriptor)
     {
-
     }
 
     bool operator<(const ClientRepr& cl) const

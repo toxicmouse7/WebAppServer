@@ -33,6 +33,9 @@ Server::Server(const std::string& ip_address, int port)
     }
 }
 
+/**
+ * Runs server app
+*/
 [[noreturn]] void Server::run()
 {
     if (listen(this->sock_d, 5) == -1)
@@ -50,6 +53,10 @@ Server::Server(const std::string& ip_address, int port)
 
 }
 
+/**
+ * Runs thread for serving user
+ * @param repr - object which representing user
+ */
 void Server::run_user_thread(const ClientRepr& repr) const
 {
     std::thread user_thread(&Server::serve_user,
@@ -58,6 +65,10 @@ void Server::run_user_thread(const ClientRepr& repr) const
     user_thread.detach();
 }
 
+/**
+ * A main loop for each user's thread
+ * @param repr - object which representing user
+ */
 void Server::serve_user(ClientRepr& repr)
 {
     std::string string_message;
@@ -97,7 +108,12 @@ void Server::serve_user(ClientRepr& repr)
     this->clients.erase(repr);
 }
 
-void Server::send_all(const std::string& message, const ClientRepr& repr) const
+/**
+ * Sends message to user. Message is split into arrays of 4096 bytes and sent chunk by chunk
+ * @param message - message to be sent
+ * @param repr - object which representing user
+ */
+void Server::send_all(const std::string& message, const ClientRepr& repr)
 {
     char data[4096] = {0};
     size_t to_send = message.size() + sizeof(ulong);
@@ -127,10 +143,17 @@ void Server::send_all(const std::string& message, const ClientRepr& repr) const
     }
 }
 
-long Server::send_chunk(int sock, char* buf, size_t length) const
+/**
+ * Sends an array of bytes to user
+ * @param sock - user's socket
+ * @param buf - bytes array
+ * @param length - a number of bytes to be sent
+ * @return a number of actually sent bytes
+ */
+long Server::send_chunk(int sock, char* buf, size_t length)
 {
     ssize_t total = 0;
-    ssize_t sent = 0;
+    ssize_t sent;
     while (total < length)
     {
         sent = send(sock, buf + total, length - total, 0);
@@ -144,6 +167,11 @@ long Server::send_chunk(int sock, char* buf, size_t length) const
     return total;
 }
 
+/**
+ * Receives message from user
+ * @param repr - object which representing user
+ * @return received message
+ */
 std::string Server::receive_all(const ClientRepr& repr)
 {
     std::string result;
@@ -159,11 +187,8 @@ std::string Server::receive_all(const ClientRepr& repr)
 
         while (to_receive > 0)
         {
-            auto chunk = std::string();
-            if (to_receive < sizeof(data) - sizeof(ulong))
-                chunk = receive_chunk(repr.sock_d, to_receive);
-            else
-                chunk = receive_chunk(repr.sock_d, sizeof(data));
+            auto chunk = receive_chunk(repr.sock_d,
+                                       std::min(to_receive, (ulong)sizeof(data)));
 
             to_receive -= chunk.size();
             result.insert(result.end(), chunk.begin(), chunk.end());
@@ -179,6 +204,12 @@ std::string Server::receive_all(const ClientRepr& repr)
     return result;
 }
 
+/**
+ * Receives bytes array
+ * @param sock - user's socket
+ * @param to_receive - a number of bytes to receive
+ * @return received array converted to string
+ */
 std::string Server::receive_chunk(int sock, ulong to_receive)
 {
     std::string result;
@@ -195,12 +226,17 @@ std::string Server::receive_chunk(int sock, ulong to_receive)
 
     for (int i = 0; i < to_receive; ++i)
     {
-        result.push_back(buf[i]);
+        result.push_back(buf[ i ]);
     }
 
     return result;
 }
 
+/**
+ * Saves file
+ * @param filename - a name for file
+ * @param data - a payload of file
+ */
 void Server::save_file(const std::string& filename, const std::string& data)
 {
     std::ofstream file(filename, std::ios::binary);

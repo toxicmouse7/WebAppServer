@@ -12,6 +12,9 @@
 
 typedef unsigned long long ulong;
 
+/**
+ * Server app class
+ */
 class Server
 {
 private:
@@ -22,9 +25,9 @@ private:
 
     void run_user_thread(const ClientRepr& repr) const;
 
-    void send_all(const std::string& message, const ClientRepr& repr) const;
+    static void send_all(const std::string& message, const ClientRepr& repr) ;
 
-    long send_chunk(int sock, char* buf, size_t length) const;
+    static long send_chunk(int sock, char* buf, size_t length) ;
 
     [[nodiscard]] static std::string receive_all(const ClientRepr& repr);
 
